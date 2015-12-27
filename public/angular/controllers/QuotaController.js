@@ -1,14 +1,13 @@
 app.controller("QuotaController", function ($scope, $http, Quota, $location, $timeout) {
     $scope.quota = Quota;
 
-
+    //Calculate remaining time of the github API
     $scope.updateDate = function (time) {
         var now = new Date();
         if (time * 1000 < now.getTime()) {
             $scope.exceeded = false;
         }
         else {
-            $scope.test = "toto";
             $scope.exceeded = true;
             var diff = time - now.getTime() / 1000;
             $scope.hours = Math.floor(diff / (60 * 60));
@@ -20,6 +19,7 @@ app.controller("QuotaController", function ($scope, $http, Quota, $location, $ti
         }
     }
 
+    //Event when a quota change, if it's zéro, show a popup with a timer.
     $scope.$watch(function () {
         return $scope.quota.searchQuota;
     },

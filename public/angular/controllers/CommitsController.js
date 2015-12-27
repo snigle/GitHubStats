@@ -17,23 +17,25 @@ app.controller("CommitsController", function ($scope, $routeParams,
                     Quota.setNormalQuota(headers);
                     if (status == 200) {
                         $scope.authors = data;
-                        console.log("data", data);
+                        //Sum of commits
                         $scope.totalCommits = $scope.authors.map(function (a) {
                             return a.total
                         }).reduce(function (previous, current) {
                             return previous + current
                         }, 0)
                         $scope.loadingAuthors = false;
-                    } else if (status == 202) {
+                    } 
+                    else if (status == 202) //If github api cache isn't ready, we try again
+                    {
                         $scope.loadContributors();
                     }
                 })
     }
     $scope.loadContributors();
-    // Get 100 latest commits
-
+    
     $scope.page = 1;
-    $scope.loadCommits = function(page = 1){
+    $scope.loadCommits = function(page){
+        page = !page? 1 : page;
         $scope.page = page;
         $scope.loadingCommits = true;
         $http.get(
@@ -58,6 +60,7 @@ app.controller("CommitsController", function ($scope, $routeParams,
     }
     $scope.loadCommits();
 
+    //return a font size proportional with the total of commits
     $scope.calculateFontSize = function (author) {
         var min = 12;
         var max = 30;
