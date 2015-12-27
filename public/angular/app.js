@@ -17,8 +17,24 @@ app.config([ '$routeProvider','$locationProvider', function($routeProvider,$loca
 //app.run(function($http) {
 //  $http.defaults.headers.common.Authorization = 'token 6c2fac592f4098ca7211429aaf81a71275088b03';
 //});
-
-app.factory('Repos', function($http) {
+app.factory('Quota', function(){
+    return {
+        searchQuota : 10,
+        searchTime : null,
+        normalQuota : 60,
+        normalTime : null,
+        setSearchQuota : function(headers){
+            this.searchQuota = headers("x-ratelimit-remaining");
+            this.searchTime =  headers("x-ratelimit-reset");
+            console.log("set search");
+        },
+        setNormalQuota : function(headers){
+            this.normalQuota = headers("x-ratelimit-remaining");
+            this.normalTime =  headers("x-ratelimit-reset");
+        }
+    }
+})
+app.factory('Repos', function($http, Quota) {
 	return {
 		loading : false,
 		data : {},
@@ -34,7 +50,8 @@ app.factory('Repos', function($http) {
 				this.last_update = thisTime;
 				this.loading = true;
 				$http.get('https://api.github.com/search/repositories?page='+this.page+'&q='+this.searchText)
-				.success(function(data){
+				.success(function(data,status,headers){
+                                    Quota.setSearchQuota(headers);
 					if(that.last_update == thisTime){
 						if(page == 1){
 							that.data = data;
@@ -47,8 +64,9 @@ app.factory('Repos', function($http) {
 						}
 					}
 					that.loading = false;
-				}).error(function(data){
+				}).error(function(data,status,headers){
 					that.loading = false;
+                                        Quota.setSearchQuota(headers)
 				})			
 			}
 		},

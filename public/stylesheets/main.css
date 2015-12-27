@@ -16,6 +16,14 @@ header .input{
 	cursor: pointer;
 }
 
+.modal .time{
+    font-size:18px;
+    color: #666;
+}
+.modal{
+    text-align: center;
+}
+
 
 .results{
 	padding-top:20px;
