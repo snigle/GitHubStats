@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+
+<html lang="en" ng-app="GitHubStats">
+    <head>
+        <base href="/">
+        <title>GitHubStats</title>
+
+
+        <!-- Bootstrap -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+        <!-- FontAwesome -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+        
+        <!-- AngularJs Dependencies -->
+        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.0-rc.0/angular.min.js"></script>
+        <script src="https://code.angularjs.org/1.5.0-rc.0/angular-route.min.js"></script>
+        <script src="https://code.angularjs.org/1.5.0-rc.0/angular-resource.min.js"></script>
+    
+        <!-- UnderscoreJS with dependencies -->
+        <script src="http://underscorejs.org/underscore-min.js"></script>
+        
+        <!-- AngularJS Controllers -->
+        <script src="/angular/app.js" type="text/javascript"></script>
+        <script src="/angular/controllers/SearchController.js" type="text/javascript"></script>
+        <script src="/angular/controllers/ReposController.js" type="text/javascript"></script>
+        <script src="/angular/controllers/CommitsController.js" type="text/javascript"></script>
+        
+        
+        <!-- Stylesheets -->
+        <link rel="stylesheet" media="screen" href="/stylesheets/main.css">
+        <link rel="shortcut icon" type="image/png" href="/images/favicon.png">
+        
+        
+        
+    </head>
+    <body>
+    <header ng-controller="SearchController">
+        <div class="alert alert-danger alert-dismissible" role="alert" ng-if="error">
+		  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+		  {{Flash.error}}
+		</div>
+	    <h1 class="col-sm-12">GitHub Stats</h1>
+	    <div md-content class="col-sm-12">
+	        <form class="input input-group" ng-submit="search()">
+		        <input class="form-control" ng-model="repos.searchText" name="search" list="reposList" ng-change="repos.update()"
+		        aria-describedby="search-addon" placeholder="Choose a repository from GitHub"/>
+		        <span ng-click="search()" class="input-group-addon" id="search-addon" >
+		               <span class="glyphicon glyphicon-search" ng-if="!repos.loading"></span>
+		               <i class="fa fa-spinner fa-spin" ng-if="repos.loading"></i>
+		        </span>
+		        <datalist id="reposList">
+			        <select >
+			          <option ng-repeat="repo in repos.completion"><b>{{repo}}</b></option>
+			        </select>
+		        </datalist>
+	        </form>
+	    </div>
+    </header>
+    <hr />
+        <div class="container" ng-view></div>
+        
+        
+    </body>
+</html>
+

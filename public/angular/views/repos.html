@@ -1,24 +1,13 @@
-<header>
-	<h1 class="col-sm-12">GitHub Stats</h1>
-	<div md-content class="col-sm-12">
-		<div class="input">
-			<div class="searchBar">
-				<md-autocomplete md-selected-item="selectedRepo"
-					md-search-text-change="searchRepos()" md-search-text="searchText"
-					md-selected-item-change="showIte(item)" md-items="item in repos"
-					md-item-text="item.display" md-min-length="0"
-					md-floating-label="Chose a GitHub repository to analysis"
-					placeholder="Chose a GitHub repository to analysis"> 
-					<md-item-template>
-						<span md-highlight-text="searchText" md-highlight-flags="^i">{{item.display}}</span>
-					</md-item-template>
-					<md-not-found> No states matching "{{searchText}}"
-				were found. </md-not-found>
-				</md-autocomplete>
-			</div><div class="input-group-addon" style="display: inline-block">
-				<span class="glyphicon glyphicon-search"></span>
-			</div>
-		</div>
-	</div>
-</header>
-<hr />
+<div class="col-xs-12 col-sm-12 numberResults" ng-if="repos.data.total_count">{{repos.data.total_count}} results :</div>
+<div ng-repeat="repo in repos.data.items" class="col-xs-12 col-sm-12 results">
+<div class="col-xs-8 col-sm-10">
+<h3><a href="repos/{{repo.full_name}}">{{repo.full_name}}</a></h3>
+<div class="description" >{{repo.description}}</div>
+</div>
+<div class="col-xs-2 col-sm-1 counts"><i class="glyphicon glyphicon-star"></i><br />{{repo.stargazers_count}}</div>
+<div class="col-xs-2 col-sm-1 counts "><i class="glyphicon glyphicon-random"></i><br />{{repo.forks_count}}</div>
+<hr class="offset-xs-2 offset-sm-2 col-xs-10 col-sm-10"/> 
+</div>
+
+<div class="col-xs-12 col-sm-12 loader" ng-if="repos.loading"><i class="fa fa-spinner fa-spin"></i></div>
+<div class="col-xs-12 col-sm-12 more" ng-if="repos.data.total_count > repos.data.items.length"><button class="btn btn-default" ng-click="repos.nextPage()">More Results</button></div>
