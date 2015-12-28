@@ -1,0 +1,16 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# Home page
+GET     /                           controllers.Application.index
+GET     /repos/*name                controllers.Application.repo(name)
+GET     /commits/*repo/:page        controllers.Application.commits(repo,page : Int)
+GET     /login/:code                controllers.Application.login(code : String)
+
+
+# Map static resources from the /public folder to the /assets URL path
+GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
+GET     /angular/*file               controllers.Assets.versioned(path="/public/angular", file: Asset)
+GET     /images/*file               controllers.Assets.versioned(path="/public/images", file: Asset)
+GET     /stylesheets/*file               controllers.Assets.versioned(path="/public/stylesheets", file: Asset)

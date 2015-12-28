@@ -37,5 +37,21 @@ app.controller("QuotaController", function ($scope, $http, Quota, $location, $ti
                 }
             })
 
+    $scope.redirect_uri = encodeURIComponent($location.absUrl());
+
+    if(code = $location.search().code){
+        $http.get("/login/"+code).success(function(data){
+            $location.search("code",null);
+            $http.defaults.headers.common.Authorization = 'token '+data.access_token;
+            $scope.login = true;
+        })
+    }
+    
+    $scope.signin = function(access_token){
+        if(access_token){
+            $http.defaults.headers.common.Authorization = 'token '+access_token;
+            $scope.login = true;
+        }
+    }
 
 })

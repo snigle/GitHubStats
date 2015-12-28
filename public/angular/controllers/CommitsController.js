@@ -39,8 +39,8 @@ app.controller("CommitsController", function ($scope, $routeParams,
         $scope.page = page;
         $scope.loadingCommits = true;
         $http.get(
-                "https://api.github.com/repos/" + $routeParams["org"] + "/"
-                + $routeParams["repo"] + "/commits?page=" + $scope.page).success(
+                "/commits/" + $routeParams["org"] + "/"
+                + $routeParams["repo"] + "/"+ $scope.page).success(
                 function (data, status,headers) {
                     Quota.setNormalQuota(headers);
                     if (page == 1) {
