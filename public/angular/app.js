@@ -51,7 +51,7 @@ app.factory('Repos', function($http, Quota) {
                 var thisTime = new Date();
                 this.last_update = thisTime;
                 this.loading = true;
-                $http.get('https://api.github.com/search/repositories?page='
+                $http.get('https://api.github.com/search/repositories?per_page=100&page='
                         +this.page+'&q='+this.searchText)
                 .success(function(data,status,headers){
                     Quota.setSearchQuota(headers);
@@ -78,5 +78,8 @@ app.factory('Repos', function($http, Quota) {
 }
 )
 
+app.controller("MainController",function($scope, Quota){
+    $scope.quota = Quota;
+})
 
 

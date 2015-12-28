@@ -2,17 +2,17 @@ app.controller("QuotaController", function ($scope, $http, Quota, $location, $ti
     $scope.quota = Quota;
 
     //Calculate remaining time of the github API
-    $scope.updateDate = function (time) {
+    $scope.updateDate = function (time, callback) {
         var now = new Date();
         if (time * 1000 < now.getTime()) {
-            $scope.exceeded = false;
+            $scope.quota.exceeded = false;
         }
         else {
-            $scope.exceeded = true;
+            $scope.quota.exceeded = true;
             var diff = time - now.getTime() / 1000;
-            $scope.hours = Math.floor(diff / (60 * 60));
-            $scope.minuts = Math.floor(diff / (60));
-            $scope.seconds = Math.floor(diff);
+            $scope.hours = Math.floor(diff / (60 * 60)) % 24;
+            $scope.minutes = Math.floor(diff / 60) % 60;
+            $scope.seconds = Math.floor(diff) % 60;
             $timeout(function () {
                 $scope.updateDate(time);
             }, 1000)
@@ -39,18 +39,18 @@ app.controller("QuotaController", function ($scope, $http, Quota, $location, $ti
 
     $scope.redirect_uri = encodeURIComponent($location.absUrl());
 
-    if(code = $location.search().code){
-        $http.get("/login/"+code).success(function(data){
-            $location.search("code",null);
-            $http.defaults.headers.common.Authorization = 'token '+data.access_token;
-            $scope.login = true;
+    if (code = $location.search().code) {
+        $http.get("/login/" + code).success(function (data) {
+            $location.search("code", null);
+            $http.defaults.headers.common.Authorization = 'token ' + data.access_token;
+            Quota.login = true;
         })
     }
-    
-    $scope.signin = function(access_token){
-        if(access_token){
-            $http.defaults.headers.common.Authorization = 'token '+access_token;
-            $scope.login = true;
+
+    $scope.signin = function (access_token) {
+        if (access_token) {
+            $http.defaults.headers.common.Authorization = 'token ' + access_token;
+            Quota.login = true;
         }
     }
 

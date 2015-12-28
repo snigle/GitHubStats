@@ -4,54 +4,33 @@ app.controller("CommitsController", function ($scope, $routeParams,
 
     $scope.commits = [];
     $scope.authors = [];
-    $scope.loadingAuthors = false;
     $scope.loadingCommits = false;
 
-    // Get contributors with stats
-    $scope.loadContributors = function () {
-        $scope.loadingAuthors = true;
-        $http.get(
-                "https://api.github.com/repos/" + $routeParams["org"] + "/"
-                + $routeParams["repo"] + "/stats/contributors")
-                .success(function (data, status, headers) {
-                    Quota.setNormalQuota(headers);
-                    if (status == 200) {
-                        $scope.authors = data;
-                        //Sum of commits
-                        $scope.totalCommits = $scope.authors.map(function (a) {
-                            return a.total
-                        }).reduce(function (previous, current) {
-                            return previous + current
-                        }, 0)
-                        $scope.loadingAuthors = false;
-                    } 
-                    else if (status == 202) //If github api cache isn't ready, we try again
-                    {
-                        $scope.loadContributors();
-                    }
-                })
-    }
-    $scope.loadContributors();
-    
     $scope.page = 1;
-    $scope.loadCommits = function(page){
-        page = !page? 1 : page;
+    $scope.loadCommits = function (page) {
+        page = !page ? 1 : page;
         $scope.page = page;
         $scope.loadingCommits = true;
         $http.get(
                 "/commits/" + $routeParams["org"] + "/"
-                + $routeParams["repo"] + "/"+ $scope.page).success(
-                function (data, status,headers) {
+                + $routeParams["repo"] + "/" + $scope.page).success(
+                function (data, status, headers) {
                     Quota.setNormalQuota(headers);
                     if (page == 1) {
-                        $scope.commits = data;
+                        $scope.commits = data.commits;
+                        $scope.authors = data.authors;
+                        $scope.totalCommits = $scope.commits.length;
                     }
                     else {
-                        $scope.commits = $scope.commits.concat(data);
+                        if (data.commits.length) {
+                            $scope.commits = $scope.commits.concat(data.commits);
+                        } else {
+                            $scope.noMoreResults = true;
+                        }
                     }
                     $scope.loadingCommits = false;
                 }).error(
-                function (data,status,headers) {
+                function (data, status, headers) {
                     Quota.setNormalQuota(headers);
                     Repos.searchText = $routeParams["repo"];
                     Repos.update();

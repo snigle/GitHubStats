@@ -2,18 +2,53 @@ package controllers
 
 import play.api._
 import play.api.libs.json.Json
+import play.api.libs.json.Reads
 import play.api.libs.ws.WSClient
 import play.api.mvc._
 import javax.inject.Inject
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 import scala.concurrent.ExecutionContext.Implicits.global
 
-case class Author(login: String, avatar_url: String)
-case class Commit(message: String, author: Author, date: String)
+case class Author(login: Option[String], name: String, email: String, avatar_url: Option[String], total: Option[Int])
+case class Commit(message: String, author: Author, date: String, sha: String)
 
 class Application @Inject() (ws: WSClient) extends Controller {
 
-  implicit val authorReader = Json.reads[Author]
-  implicit val commitReader = Json.reads[Commit]
+  //  Json readers
+  implicit val authorReader: Reads[Author] = (
+    (__ \ "author" \ "login").readNullable[String] and
+    (__ \ "commit" \ "author" \ "name").read[String] and
+    (__ \ "commit" \ "author" \ "email").read[String] and
+    (__ \ "author" \ "avatar_url").readNullable[String] and
+    (__ \ "author" \ "total").readNullable[Int]
+  )(Author.apply _)
+
+  implicit val commitReader = (
+    (__ \ "commit" \ "message").read[String] and
+    (__).read[Author] and
+    (__ \ "commit" \ "author" \ "date").read[String] and
+    (__ \ "sha").read[String]
+  )(Commit.apply _)
+  //Json writers
+
+  implicit val authorToJson = new Writes[Author] {
+    def writes(author: Author) = Json.obj(
+      "login" -> author.login,
+      "name" -> author.name,
+      "email" -> author.email,
+      "avatar_url" -> author.avatar_url,
+      "total" -> author.total
+    )
+  }
+  implicit val commitToJson = new Writes[Commit] {
+    def writes(commit: Commit) = Json.obj(
+      "message" -> commit.message,
+      "author" -> commit.author,
+      "date" -> commit.date,
+      "sha" -> commit.sha
+    )
+  }
 
   def index() = Action { implicit request =>
     Ok(views.html.index("GitHub Stats"))
@@ -24,15 +59,30 @@ class Application @Inject() (ws: WSClient) extends Controller {
   }
 
   def commits(repo: String, page: Int) = Action.async {
-    ws.url("https://api.github.com/repos/" + repo + "/commits?page=" + page).withHeaders("Accept" -> "application/json").get.map(response => {
-      //      println(response.body);
-      //        val commits_json = Json.toJson( Map( "result" -> response.json))
-      //      println((commits_json \ "results" \\ "author").asList[Author])
-      //        
-      Ok(response.json).withHeaders(
-        "x-rate-limit-remaining" -> response.header("x-rate-limit-remaining").getOrElse("0"),
-        "x-rate-limit-reset" -> response.header("x-rate-limit-reset").getOrElse("0")
-      );
+    ws.url("https://api.github.com/repos/" + repo + "/commits?per_page=100&page=" + page).withHeaders("Accept" -> "application/json").get.map(response => {
+        var commits : Seq[Commit] = Nil;
+        var authors : Iterable[Author] = Nil
+      if (response.status == 200) {
+        commits = response.json.validate[Seq[Commit]].get;
+        println(response.allHeaders)
+        authors = commits.groupBy(commit => commit.author.email).mapValues(c_all =>
+          Author(
+            c_all.flatMap(a => a.author.login).headOption,
+            c_all.map(a => a.author.name).head,
+            c_all.map(a => a.author.email).head,
+            c_all.flatMap(a => a.author.avatar_url).headOption,
+            Some(c_all.length)
+          )).values
+      }
+   
+        Ok(Json.toJson(Map(
+        "commits" -> Json.toJson(commits),
+        "authors" -> Json.toJson(authors)
+      ))).withHeaders(
+        "x-ratelimit-remaining" -> response.header("X-RateLimit-Remaining").getOrElse("0"),
+        "x-ratelimit-reset" -> response.header("X-RateLimit-Reset").getOrElse("0")
+      )
+
     });
   }
 

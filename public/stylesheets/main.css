@@ -1,13 +1,15 @@
 /*Layout*/
 header{
-    height:200px;
+    height:220px;
     padding-top:50px;
     background-color:white;	
     text-align:center;
     background-color:#789BFF;
     background-image: url("../images/head.png"), linear-gradient(#003B9E, #789BFF);
     color: #FFF;
+    margin-bottom:50px;
 }
+
 header h1{
     margin:none;
     margin-bottom:20px;

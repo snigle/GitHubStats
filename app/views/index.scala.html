@@ -1,7 +1,7 @@
 @(title: String)(implicit request : play.api.mvc.Request[AnyContent]) 
 
 <!DOCTYPE html>
-<html lang="en" ng-app="GitHubStats" charset="utf-8">
+<html lang="en" ng-app="GitHubStats" charset="utf-8" ng-controller="MainController">
     <head>
         <base href="/">
         <title>@title</title>
@@ -31,13 +31,14 @@
     </head>
     <body>
 
-        <!--Quota modal if exceeded rates-->
+        <!--Get the access token if present in cookie-->
         @defining(request.cookies.get("access_token") match {
             case Some(c) => c.value
             case _ => ""
           }){ access_token =>
+        <!--Quota modal if exceeded rates-->
         <div ng-controller="QuotaController" ng-init="signin('@access_token')">
-            <div class="modal fade in" tabindex="-1" role="dialog" ng-if="exceeded" style="display:block;">
+            <div class="modal fade in" tabindex="-1" role="dialog" ng-if="quota.exceeded" style="display:block;">
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -50,7 +51,7 @@
                                     <span ng-if="minutes">{{minutes}}min</span>
                                     <span ng-if="seconds">{{seconds}}s</span>
                                 </span><br />
-                                <a ng-if="!login" ng-href="https://github.com/login/oauth/authorize?client_id=023b4b4bb7288038ddc4&amp;scope=public_repo&amp;redirect_uri={{redirect_uri}}"> Sign in with your GitHub account to increase the quota </a>
+                                <a ng-if="!quota.login" ng-href="https://github.com/login/oauth/authorize?client_id=023b4b4bb7288038ddc4&amp;scope=public_repo&amp;redirect_uri={{redirect_uri}}"> Sign in with your GitHub account to increase the quota </a>
                             </p>
                         </div>
                     </div>
@@ -61,10 +62,10 @@
         <header ng-controller="SearchController">
             <h1 class="col-sm-12">GitHub Stats</h1>
             <div class="col-sm-12">
-                <form class="input input-group" ng-submit="repos.update();search()">
-                    <input class="form-control" ng-model="repos.searchText" name="search" list="reposList"
+                <form class="input input-group" ng-submit="search()">
+                    <input class="form-control" ng-model="repos.searchText" ng-change="update()" name="search" list="reposList"
                            aria-describedby="search-addon" placeholder="Choose a repository from GitHub"/>
-                    <span ng-click="repos.update();search()" class="input-group-addon" id="search-addon" >
+                    <span ng-click="search()" class="input-group-addon" id="search-addon" >
                         <span class="glyphicon glyphicon-search" ng-if="!repos.loading"></span>
                         <i class="fa fa-spinner fa-spin" ng-if="repos.loading"></i>
                     </span>
@@ -76,11 +77,11 @@
                 </form>
             </div>
         </header>
-        <hr />
+       
 
 
 
-        <div class="container" ng-view></div>
+        <div class="container" ng-view ng-if="!quota.exceeded"></div>
 
 
     </body>
