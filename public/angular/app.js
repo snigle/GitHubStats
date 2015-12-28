@@ -71,6 +71,11 @@ app.factory('Repos', function($http, Quota) {
                 }).error(function(data,status,headers){
                         that.loading = false;
                         Quota.setSearchQuota(headers)
+                        if(status == 401){
+                            Quota.login = false;
+                            delete $http.defaults.headers.common.Authorization;
+                            that.update(page);
+                        }
                 })			
             }
         }

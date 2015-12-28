@@ -30,8 +30,9 @@ class Application @Inject() (ws: WSClient) extends Controller {
     (__ \ "commit" \ "author" \ "date").read[String] and
     (__ \ "sha").read[String]
   )(Commit.apply _)
+  
+  
   //Json writers
-
   implicit val authorToJson = new Writes[Author] {
     def writes(author: Author) = Json.obj(
       "login" -> author.login,
@@ -50,22 +51,27 @@ class Application @Inject() (ws: WSClient) extends Controller {
     )
   }
 
+  //Search Bar
   def index() = Action { implicit request =>
     Ok(views.html.index("GitHub Stats"))
   }
-
+  
+  //Display analysis of a repo
   def repo(name: String) = Action { implicit request =>
     Ok(views.html.index(name + " - GitHubStats"))
   }
 
-  def commits(repo: String, page: Int) = Action.async {
-    ws.url("https://api.github.com/repos/" + repo + "/commits?per_page=100&page=" + page).withHeaders("Accept" -> "application/json").get.map(response => {
-        var commits : Seq[Commit] = Nil;
-        var authors : Iterable[Author] = Nil
+  //Get list of commits and total by author
+  def commits(repo: String, page: Int) = Action.async { request =>
+    val head  = request.cookies.get("access_token") match {
+      case None => ("Accept" -> "application/json")
+      case Some(access_token) => ("Authorization" -> ("token "+access_token.value))
+    }
+    
+    ws.url("https://api.github.com/repos/" + repo + "/commits?per_page=100&page=" + page).withHeaders(head).get.map(response => {
       if (response.status == 200) {
-        commits = response.json.validate[Seq[Commit]].get;
-        println(response.allHeaders)
-        authors = commits.groupBy(commit => commit.author.email).mapValues(c_all =>
+        val commits = response.json.validate[Seq[Commit]].get;
+        val authors = commits.groupBy(commit => commit.author.email).mapValues(c_all =>
           Author(
             c_all.flatMap(a => a.author.login).headOption,
             c_all.map(a => a.author.name).head,
@@ -73,19 +79,29 @@ class Application @Inject() (ws: WSClient) extends Controller {
             c_all.flatMap(a => a.author.avatar_url).headOption,
             Some(c_all.length)
           )).values
-      }
-   
-        Ok(Json.toJson(Map(
+        
+          Ok(Json.toJson(Map(
         "commits" -> Json.toJson(commits),
         "authors" -> Json.toJson(authors)
       ))).withHeaders(
         "x-ratelimit-remaining" -> response.header("X-RateLimit-Remaining").getOrElse("0"),
         "x-ratelimit-reset" -> response.header("X-RateLimit-Reset").getOrElse("0")
       )
+      
+      }
+      else if(response.status == 401){//wrong token
+        Unauthorized.withCookies(Cookie("access_token","",Some(0)))
+      }
+      else{
+        Status(response.status)
+      }
+   
+        
 
     });
   }
 
+  //Ask access_token from gitHub and save it in cookie
   def login(code: String) = Action.async { implicit request =>
     {
       ws.url("https://github.com/login/oauth/access_token").withHeaders("Accept" -> "application/json").post(

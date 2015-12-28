@@ -31,10 +31,16 @@ app.controller("CommitsController", function ($scope, $routeParams,
                     $scope.loadingCommits = false;
                 }).error(
                 function (data, status, headers) {
-                    Quota.setNormalQuota(headers);
-                    Repos.searchText = $routeParams["repo"];
-                    Repos.update();
-                    $location.path('/');
+                    if(status == 401){
+                        Quota.login = false;
+                        $scope.loadCommits(page);              
+                    }
+                    else{
+                        Quota.setNormalQuota(headers);
+                        Repos.searchText = $routeParams["repo"];
+                        Repos.update();
+                        $location.path('/');
+                    }
                 })
     }
     $scope.loadCommits();
