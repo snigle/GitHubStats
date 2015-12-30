@@ -9,6 +9,7 @@ import javax.inject.Inject
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import scala.concurrent.ExecutionContext.Implicits.global
+import play.api.Play.current
 
 case class Author(login: Option[String], name: String, email: String, avatar_url: Option[String], total: Option[Int])
 case class Commit(message: String, author: Author, date: String, sha: String)
@@ -106,8 +107,8 @@ class Application @Inject() (ws: WSClient) extends Controller {
     {
       ws.url("https://github.com/login/oauth/access_token").withHeaders("Accept" -> "application/json").post(
         Json.toJson(Map(
-          "client_id" -> "023b4b4bb7288038ddc4",
-          "client_secret" -> "43f14fe116ac645011d70711d59fdcc0e09a4bbf",
+          "client_id" -> current.configuration.getString("github.client_id").get,//"023b4b4bb7288038ddc4",
+          "client_secret" -> current.configuration.getString("github.client_secret").get,//"43f14fe116ac645011d70711d59fdcc0e09a4bbf",
           "code" -> code
         ))
       )
