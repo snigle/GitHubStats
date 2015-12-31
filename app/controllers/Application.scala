@@ -10,29 +10,34 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import scala.concurrent.ExecutionContext.Implicits.global
 import play.api.Play.current
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
-case class Author(login: Option[String], name: String, email: String, avatar_url: Option[String], total: Option[Int])
+case class Author(login: Option[String], name: Option[String], email: Option[String], avatar_url: Option[String], total: Option[Int])
 case class Commit(message: String, author: Author, date: String, sha: String)
 
 class Application @Inject() (ws: WSClient) extends Controller {
 
   //  Json readers
-  implicit val authorReader: Reads[Author] = (
+  implicit val authorReaderFromCommit: Reads[Author] = (
     (__ \ "author" \ "login").readNullable[String] and
-    (__ \ "commit" \ "author" \ "name").read[String] and
-    (__ \ "commit" \ "author" \ "email").read[String] and
+    (__ \ "commit" \ "author" \ "name").readNullable[String] and
+    (__ \ "commit" \ "author" \ "email").readNullable[String] and
     (__ \ "author" \ "avatar_url").readNullable[String] and
-    (__ \ "author" \ "total").readNullable[Int]
-  )(Author.apply _)
+    (__ \ "author" \ "total").readNullable[Int])(Author.apply _)
+  implicit val authorReader: Reads[Author] = (
+    (__ \ "login").readNullable[String] and
+    (__ \ "login").readNullable[String] and
+    (__ \ "email").readNullable[String] and
+    (__ \ "avatar_url").readNullable[String] and
+    (__ \ "total").readNullable[Int])(Author.apply _)
 
   implicit val commitReader = (
     (__ \ "commit" \ "message").read[String] and
-    (__).read[Author] and
+    (__).read[Author](authorReaderFromCommit) and
     (__ \ "commit" \ "author" \ "date").read[String] and
-    (__ \ "sha").read[String]
-  )(Commit.apply _)
-  
-  
+    (__ \ "sha").read[String])(Commit.apply _)
+
   //Json writers
   implicit val authorToJson = new Writes[Author] {
     def writes(author: Author) = Json.obj(
@@ -40,23 +45,21 @@ class Application @Inject() (ws: WSClient) extends Controller {
       "name" -> author.name,
       "email" -> author.email,
       "avatar_url" -> author.avatar_url,
-      "total" -> author.total
-    )
+      "total" -> Json.toJson(author.total.getOrElse(0)))
   }
   implicit val commitToJson = new Writes[Commit] {
     def writes(commit: Commit) = Json.obj(
       "message" -> commit.message,
       "author" -> commit.author,
       "date" -> commit.date,
-      "sha" -> commit.sha
-    )
+      "sha" -> commit.sha)
   }
 
   //Search Bar
   def index() = Action { implicit request =>
     Ok(views.html.index("GitHub Stats"))
   }
-  
+
   //Display analysis of a repo
   def repo(name: String) = Action { implicit request =>
     Ok(views.html.index(name + " - GitHubStats"))
@@ -64,42 +67,46 @@ class Application @Inject() (ws: WSClient) extends Controller {
 
   //Get list of commits and total by author
   def commits(repo: String, page: Int) = Action.async { request =>
-    val head  = request.cookies.get("access_token") match {
-      case None => ("Accept" -> "application/json")
-      case Some(access_token) => ("Authorization" -> ("token "+access_token.value))
+    val head = request.cookies.get("access_token") match {
+      case None               => ("Accept" -> "application/json")
+      case Some(access_token) => ("Authorization" -> ("token " + access_token.value))
     }
-    
-    ws.url("https://api.github.com/repos/" + repo + "/commits?per_page=100&page=" + page).withHeaders(head).get.map(response => {
-      if (response.status == 200) {
-        val commits = response.json.validate[Seq[Commit]].get;
-        val authors = commits.groupBy(commit => commit.author.email).mapValues(c_all =>
-          Author(
-            c_all.flatMap(a => a.author.login).headOption,
-            c_all.map(a => a.author.name).head,
-            c_all.map(a => a.author.email).head,
-            c_all.flatMap(a => a.author.avatar_url).headOption,
-            Some(c_all.length)
-          )).values
-        
-          Ok(Json.toJson(Map(
-        "commits" -> Json.toJson(commits),
-        "authors" -> Json.toJson(authors)
-      ))).withHeaders(
-        "x-ratelimit-remaining" -> response.header("X-RateLimit-Remaining").getOrElse("0"),
-        "x-ratelimit-reset" -> response.header("X-RateLimit-Reset").getOrElse("0")
-      )
-      
-      }
-      else if(response.status == 401){//wrong token
-        Unauthorized.withCookies(Cookie("access_token","",Some(0)))
-      }
-      else{
-        Status(response.status)
-      }
-   
-        
 
-    });
+    //Get all contributors
+    val future_users = ws.url("https://api.github.com/repos/" + repo + "/contributors?per_page=1000")
+      .withHeaders(head).get.map(response => {
+        response.json.validate[Seq[Author]](Reads.seq[Author](authorReader)).getOrElse(Nil)
+      })
+
+    //Get 100 last commits
+    ws.url("https://api.github.com/repos/" + repo + "/commits?per_page=100&page=" + page)
+      .withHeaders(head).get.map(response => {
+        if (response.status == 200) {
+          val commits = response.json.validate[Seq[Commit]].get;
+          val commiters = commits.groupBy(commit => commit.author.email).mapValues(c_all =>
+            Author(
+              c_all.flatMap(a => a.author.login).headOption,
+              c_all.map(a => a.author.name).head,
+              c_all.map(a => a.author.email).head,
+              c_all.flatMap(a => a.author.avatar_url).headOption,
+              Some(c_all.length))).values
+              
+          //Add contributors which are not in last 100 commits
+          val users = Await.result(future_users, 20 seconds).filter(a => commiters.find(c => c.login == a.login) == None)
+          val authors = commiters ++ users
+          Ok(Json.toJson(Map(
+            "commits" -> Json.toJson(commits),
+            "authors" -> Json.toJson(authors)))).withHeaders(
+            "x-ratelimit-remaining" -> response.header("X-RateLimit-Remaining").getOrElse("0"),
+            "x-ratelimit-reset" -> response.header("X-RateLimit-Reset").getOrElse("0"))
+
+        } else if (response.status == 401) { //wrong token
+          Unauthorized.withCookies(Cookie("access_token", "", Some(0)))
+        } else {
+          Status(response.status)
+        }
+
+      });
   }
 
   //Ask access_token from gitHub and save it in cookie
@@ -107,20 +114,16 @@ class Application @Inject() (ws: WSClient) extends Controller {
     {
       ws.url("https://github.com/login/oauth/access_token").withHeaders("Accept" -> "application/json").post(
         Json.toJson(Map(
-          "client_id" -> current.configuration.getString("github.client_id").get,//"023b4b4bb7288038ddc4",
-          "client_secret" -> current.configuration.getString("github.client_secret").get,//"43f14fe116ac645011d70711d59fdcc0e09a4bbf",
-          "code" -> code
-        ))
-      )
+          "client_id" -> current.configuration.getString("github.client_id").get, //"023b4b4bb7288038ddc4",
+          "client_secret" -> current.configuration.getString("github.client_secret").get, //"43f14fe116ac645011d70711d59fdcc0e09a4bbf",
+          "code" -> code)))
         .map(response => {
           Ok(response.json).withCookies(
             Cookie(
               "access_token",
               (response.json \ "access_token").get.toString,
               Some(60 * 60 * 24 * 7),
-              httpOnly = true
-            )
-          )
+              httpOnly = true))
         })
 
     }

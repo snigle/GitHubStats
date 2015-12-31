@@ -51,7 +51,7 @@
                                     <span ng-if="minutes">{{minutes}}min</span>
                                     <span ng-if="seconds">{{seconds}}s</span>
                                 </span><br />
-                                @defining(current.configuration.getString("github.client_secret").get){ client_id =>
+                                @defining(current.configuration.getString("github.client_id").get){ client_id =>
                                 <a ng-if="!quota.login" ng-href="https://github.com/login/oauth/authorize?client_id=@client_id&amp;scope=public_repo&amp;redirect_uri={{redirect_uri}}"> Sign in with your GitHub account to increase the quota </a>
                                 }
                             </p>
