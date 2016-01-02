@@ -1,5 +1,12 @@
 <!-- Contributors stats -->
-<div class="col-xs-12 col-sm-4 contributors" ng-if="!loadingCommits">
+
+<h2 class="error" ng-if="error">
+{{error}}
+</h2>
+
+<div class="col-xs-12 col-sm-12 loader" ng-if="firstLoad"><i class="fa fa-spinner fa-spin"></i></div>
+
+<div class="col-xs-12 col-sm-4 contributors" ng-if="!firstLoad && !error">
 	<div class="panel panel-default">
 		<div class="panel-heading">
 			<h3>Contributors Impact</h3>
@@ -19,7 +26,7 @@
 </div>
 
 <!-- Contributors stats -->
-<div class="col-xs-12 col-sm-8 commitsTimeline">
+<div class="col-xs-12 col-sm-8 commitsTimeline" ng-if="!firstLoad && !error">
 	<div class="panel panel-default" ng-repeat="commit in commits">
 		<div class="panel-heading">
 			<div class="row">

@@ -10,7 +10,8 @@ app.controller("CommitsController", function ($scope, $routeParams,
     $scope.loadCommits = function (page) {
         page = !page ? 1 : page;
         $scope.page = page;
-        $scope.loadingCommits = true;
+        $scope.loadingCommits = page > 1;
+        $scope.firstLoad = page == 1;
         $http.get(
                 "/commits/" + $routeParams["org"] + "/"
                 + $routeParams["repo"] + "/" + $scope.page).success(
@@ -29,18 +30,25 @@ app.controller("CommitsController", function ($scope, $routeParams,
                         }
                     }
                     $scope.loadingCommits = false;
+                    $scope.firstLoad = false;
                 }).error(
                 function (data, status, headers) {
                     if(status == 401){
                         Quota.login = false;
                         $scope.loadCommits(page);              
                     }
+                    else if( status == 409){
+                    	$scope.loadingCommits = false;
+                    	$scope.firstLoad = false;
+                        $scope.error = "This repository is empty"
+                    }
                     else{
-                        Quota.setNormalQuota(headers);
+                    	Quota.setNormalQuota(headers);
                         Repos.searchText = $routeParams["repo"];
                         Repos.update();
                         $location.path('/');
                     }
+                    
                 })
     }
     $scope.loadCommits();

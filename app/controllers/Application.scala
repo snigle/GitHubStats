@@ -12,6 +12,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import play.api.Play.current
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.concurrent.Future
 
 case class Author(login: Option[String], name: Option[String], email: Option[String], avatar_url: Option[String], total: Option[Int])
 case class Commit(message: String, author: Author, date: String, sha: String)
@@ -72,25 +73,31 @@ class Application @Inject() (ws: WSClient) extends Controller {
       case Some(access_token) => ("Authorization" -> ("token " + access_token.value))
     }
 
-    //Get all contributors
-    val future_users = ws.url("https://api.github.com/repos/" + repo + "/contributors?per_page=1000")
-      .withHeaders(head).get.map(response => {
-        response.json.validate[Seq[Author]](Reads.seq[Author](authorReader)).getOrElse(Nil)
-      })
+    //Get all contributors for the first call
+    val future_users = page match {
+      case 1 => ws.url("https://api.github.com/repos/" + repo + "/contributors?per_page=1000")
+        .withHeaders(head).get.map(response => {
+          response.json.validate[Seq[Author]](Reads.seq[Author](authorReader)).getOrElse(Nil)
+        })
+      case _ => Future(Nil)
+    }
 
     //Get 100 last commits
     ws.url("https://api.github.com/repos/" + repo + "/commits?per_page=100&page=" + page)
       .withHeaders(head).get.map(response => {
         if (response.status == 200) {
           val commits = response.json.validate[Seq[Commit]].get;
-          val commiters = commits.groupBy(commit => commit.author.email).mapValues(c_all =>
-            Author(
-              c_all.flatMap(a => a.author.login).headOption,
-              c_all.map(a => a.author.name).head,
-              c_all.map(a => a.author.email).head,
-              c_all.flatMap(a => a.author.avatar_url).headOption,
-              Some(c_all.length))).values
-              
+          val commiters = page match {
+            case 1 => commits.groupBy(commit => commit.author.email).mapValues(c_all =>
+              Author(
+                c_all.flatMap(a => a.author.login).headOption,
+                c_all.map(a => a.author.name).head,
+                c_all.map(a => a.author.email).head,
+                c_all.flatMap(a => a.author.avatar_url).headOption,
+                Some(c_all.length))).values
+            case _ => Nil
+          }
+
           //Add contributors which are not in last 100 commits
           val users = Await.result(future_users, 20 seconds).filter(a => commiters.find(c => c.login == a.login) == None)
           val authors = commiters ++ users
