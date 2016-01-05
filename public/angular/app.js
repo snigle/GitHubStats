@@ -67,8 +67,8 @@ app.factory('Repos', function($http, Quota) {
                             }else{
                                 that.data.items = that.data.items.concat(data.items);
                             }
+                            that.loading = false;
                         }
-                        that.loading = false;
                 }).error(function(data,status,headers){
                         that.loading = false;
                         Quota.setSearchQuota(headers)

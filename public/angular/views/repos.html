@@ -1,5 +1,5 @@
-<div class="col-xs-12 col-sm-12 numberResults" ng-if="repos.data.total_count">{{repos.data.total_count}} results :</div>
-<div ng-repeat="repo in repos.data.items" class="row results">
+<div class="col-xs-12 col-sm-12 numberResults" ng-if="repos.data.total_count" ng-hide="repos.page==1 && repos.loading">{{repos.data.total_count}} results :</div>
+<div ng-repeat="repo in repos.data.items" class="row results" ng-hide="repos.page==1 && repos.loading">
     <div class="col-xs-12 col-sm-10">
         <h3><a href="repos/{{repo.full_name}}">{{repo.full_name}}</a></h3>
         <div class="description" >{{repo.description}}</div>
@@ -10,4 +10,4 @@
 </div>
 
 <div class="col-xs-12 col-sm-12 loader" ng-if="repos.loading"><i class="fa fa-spinner fa-spin"></i></div>
-<div class="col-xs-12 col-sm-12 more" ng-if="repos.data.total_count > repos.data.items.length"><button class="btn btn-default" ng-click="repos.nextPage()">Show More Results</button></div>
+<div class="col-xs-12 col-sm-12 more" ng-if="repos.data.total_count > repos.data.items.length" ng-hide="repos.page==1 && repos.loading"><button class="btn btn-default" ng-click="repos.nextPage()">Show More Results</button></div>

@@ -14,6 +14,7 @@ import play.api.libs.functional.syntax._
 import scala.concurrent.ExecutionContext.Implicits.global
 import org.joda.time.DateTime
 import play.api.Play.current
+import scala.collection.immutable.ListMap
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.concurrent.Future
@@ -155,13 +156,15 @@ implicit val commitToJson = new Writes[Commit] {
           //Add contributors which are not in last 100 commits
           val users = Await.result(future_users, 20 seconds).filter(a => commiters.find(c => c.login == a.login) == None)
           val authors = commiters ++ users
-          val commitsByDate = commits.groupBy(c => c.date.year.get.toString).mapValues(v => v.groupBy(c=> c.date.monthOfYear.getAsText(java.util.Locale.ENGLISH)))
-          println(commitsByDate);
+          //Create map (Year,(Month ,commits))
+          val commitsByDate1 = commits.groupBy(c => c.date.year.get.toString).mapValues(v => v.groupBy(c=> c.date.monthOfYear))
+          //Sort by year and by month and change the key by the month name
+          val commitsByDate = Map(commitsByDate1.toSeq.sortBy(_._1).reverse:_*).mapValues(v => Map(v.toSeq.sortBy(_._1.get).reverse:_*))
+          .mapValues(v => v.map( m =>  m match {case (key,value) => (key.getAsText(java.util.Locale.ENGLISH), value)}))
           Ok(Json.toJson(Map(
-            "commits" -> Json.toJson(commits),
+            "commits" -> Json.toJson(commitsByDate),
             "totalCommits" -> Json.toJson(commits.length),
-            "authors" -> Json.toJson(authors),
-            "commitsByDate" -> Json.toJson(commitsByDate)
+            "authors" -> Json.toJson(authors)
           )))
       });
   }

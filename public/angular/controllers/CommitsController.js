@@ -1,12 +1,33 @@
 app.controller("CommitsController", function ($scope, $routeParams,
-        Repos, $http, $location, Quota, $filter) {
+        Repos, $http, $location, Quota) {
     $scope.repos = Repos;
 
-    $scope.commits = [];
+    $scope.commits = {};
     $scope.authors = [];
     $scope.loadingCommits = false;
+    $scope.totalCommits = 0;
 
     $scope.page = 1;
+
+
+    $scope.concatCommits = function (data) {
+        Object.keys(data.commits).forEach(function (year) {
+            if ($scope.commits[year]) {
+                Object.keys(data.commits[year]).forEach(function (month) {
+                    console.log(year, $scope.commits[year][month])
+                    if ($scope.commits[year][month])
+                        $scope.commits[year][month] = $scope.commits[year][month].concat(data.commits[year][month])
+                    else
+                        $scope.commits[year][month] = data.commits[year][month]
+                    console.log(year, $scope.commits[year][month])
+                })
+            }
+            else {
+                $scope.commits[year] = data.commits[year]
+            }
+        })
+    }
+
     $scope.loadCommits = function (page) {
         page = !page ? 1 : page;
         $scope.page = page;
@@ -18,17 +39,14 @@ app.controller("CommitsController", function ($scope, $routeParams,
                 function (data, status, headers) {
                     Quota.setNormalQuota(headers);
                     if (page == 1) {
-                        $scope.commits = data.commits;
                         $scope.authors = data.authors;
-                        $scope.totalCommits = data.totalCommits;
                     }
-                    else {
-                        $scope.commits = angular.extend($scope.commits, data.commits);
-                    }
-
                     if (data.totalCommits < 100) {
                         $scope.noMoreResults = true;
                     }
+                    $scope.concatCommits(data);
+                    $scope.totalCommits += data.totalCommits;
+
                     $scope.loadingCommits = false;
                     $scope.firstLoad = false;
                 }).error(
@@ -81,20 +99,25 @@ app.controller("CommitsController", function ($scope, $routeParams,
         return ((porcent * (max - min) / 100) + min) + 'px';
     }
 
-    $scope.porcentByYear = function (year) {
-        console.log("year");
-        var nbCommits = $scope.commits.reduce(function (res, commit) {
-            if ($filter('date')(commit.date, 'yyyy') == year)
-                res = res + 1;
-            return res;
+    $scope.totalCommitsOfYear = function (year) {
+        return Object.keys($scope.commits[year]).reduce(function (res, key) {
+            //console.log($scope.commits[year])
+            return res + $scope.commits[year][key].length;
         }, 0)
-        return Math.floor(nbCommits / $scope.commits.length * 100);
     }
-    $scope.porcentByMonth = function (month) {
-        return Math.floor($scope.commits.reduce(function (res, commit) {
-            if ($filter('date')(commit.date, 'MMMM') == month)
-                res++;
-            return res;
-        }, 0) / $scope.commits.length * 100);
+    $scope.percentByYear = function (year) {
+        return Math.floor($scope.totalCommitsOfYear(year) / $scope.totalCommits * 100);
+    }
+    $scope.percentByMonth = function (commits, total) {
+        var total = total == null ? $scope.totalCommits : total;
+        return Math.floor(commits.length / total * 100);
+    }
+    $scope.displayAll = false;
+})
+
+app.controller("DisplayController", function ($scope) {
+    $scope.display = false;
+    $scope.toggle = function () {
+        $scope.display = !$scope.display;
     }
 })

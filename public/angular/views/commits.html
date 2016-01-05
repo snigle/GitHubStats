@@ -31,46 +31,61 @@
 
 <!-- Contributors stats -->
 <div class="col-xs-12 col-sm-8 commitsTimeline" ng-if="!firstLoad && !error">
-    <div ng-repeat="commit in commits">
-        <div class="row year" ng-if="!commits[$index-1] ||
-                    (commits[$index-1].date  | date : 'yyyy')!= (commit.date | date : 'yyyy')">
+    <a href="#" ng-click="displayAll = !displayAll" class="displayAll"><i class="fa fa-bars"></i> Display All Commits Detail</a>
+    <div class="year" ng-repeat="(year,commitsByMonth) in commits">
+        <div class="row head noMargin">
             <h2 class="col-xs-12">
-                {{commit.date| date : 'yyyy'}}
+                {{year}}
             </h2>
-            <div class="col-xs-12 col-sm-4 col-sm-offset-4"><div class="progress">
-                    <div class="progress-bar" role="progressbar" aria-valuenow="{{porcentByYear((commit.date | date : 'yyyy'))}}" aria-valuemin="0" aria-valuemax="100" style="width: {{porcentByYear((commit.date | date : 'yyyy'))}}%;min-width: 20px;">
-                        {{porcentByYear((commit.date | date : 'yyyy'))}}%
+            <div class="col-xs-10 col-sm-4 col-sm-offset-4"><div class="progress">
+                    <div class="progress-bar" role="progressbar" style="width: {{percentByYear(year)}}%;min-width: 30px;" title="Porcentage of commits over the entire period">
+                        {{percentByYear(year)}}%
                     </div>
                 </div>
             </div>
         </div>
-        <div class="row" ng-if="!commits[$index-1] ||
-                   (commits[$index-1].date  | date : 'yyyy')!= (commit.date | date : 'yyyy') ||
-                   (commits[$index-1].date  | date : 'MMMM')!= (commit.date | date : 'MMMM')">
-            <h3 >
-                {{commit.date| date : 'MMMM'}}
-            </h3>
-            <div class="col-xs-12 col-sm-4 col-sm-offset-4"><div class="progress">
-                    <div class="progress-bar" role="progressbar" aria-valuenow="{{porcentByMonth((commit.date | date : 'MMMM'))}}" aria-valuemin="0" aria-valuemax="100" style="width: {{porcentByMonth((commit.date | date : 'MMMM'))}}%;min-width: 20px;">
-                        {{porcentByMonth((commit.date | date : 'MMMM'))}}%
+        <div ng-repeat="(month,commits) in commitsByMonth" ng-controller="DisplayController">
+            <div class="row noMargin">
+                <h3 >
+                    <span ng-if="display || displayAll">{{month}}</span>
+                    <a href="#" ng-click="toggle()" ng-if="!display && !displayAll">{{month}}</a>
+                </h3>
+                <div class="col-xs-10 col-sm-4 col-sm-offset-4"><div class="progress">
+                        <div class="progress-bar" role="progressbar" style="width: 30px;"
+                             title="Porcentage of commits over the entire period">
+                            {{percentByMonth(commits)}}%
+                        </div>
+                        <div class="progress-bar" role="progressbar"
+                             style="width: calc({{percentByMonth(commits)}}% - 30px);" title="Porcentage of commits over the entire period">
+                        </div>
+                        <div class="progress-bar progress-bar-custom" role="progressbar" 
+                             title="Porcentage of commits for the year"
+                             style="width: calc({{percentByMonth(commits, totalCommitsOfYear(year))}}% -  {{percentByMonth(commits)}}% - 30px);
+                             min-width: 30px;">
+                            {{percentByMonth(commits, totalCommitsOfYear(year))}}%
+                        </div>
                     </div>
                 </div>
+
             </div>
-        </div>
-        <div class="panel panel-default" ng-if="false">
-            <div class="panel-heading">
-                <div class="row">
-                    <span class="col-xs-12 col-sm-12 col-md-6"> <img
-                            ng-src="{{commit.author.avatar_url}}" ng-if="commit.author.avatar_url" /> <span
-                            class="name">{{commit.author.name}}</span> <span
-                            ng-if="commit.author.login">({{commit.author.login}})</span>
-                    </span> <span class="col-xs-12 col-sm-12 col-md-6 sha">commit
-                        #{{commit.sha}}</span>
+            <div class="panel panel-default" ng-repeat="commit in commits" ng-if="display || displayAll">
+                <div class="panel-heading">
+                    <div class="row">
+                        <span class="col-xs-12 col-sm-12 col-md-6"> <img
+                                ng-src="{{commit.author.avatar_url}}" ng-if="commit.author.avatar_url" /> <span
+                                class="name">{{commit.author.name}}</span> <span
+                                ng-if="commit.author.login">({{commit.author.login}})</span>
+                        </span> <span class="col-xs-12 col-sm-12 col-md-6 sha">commit
+                            #{{commit.sha}}</span>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="message">{{commit.message}}</div>
+                    <div class="date">{{commit.date| date : 'medium'}}</div>
                 </div>
             </div>
-            <div class="panel-body">
-                <div class="message">{{commit.message}}</div>
-                <div class="date">{{commit.date| date : 'medium'}}</div>
+            <div class="commitButton" ng-click="toggle()" ng-if="display && !displayAll">
+                <a href="#" ><i class="fa fa-angle-double-up"></i></a>
             </div>
         </div>
     </div>

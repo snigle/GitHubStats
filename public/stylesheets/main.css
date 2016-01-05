@@ -140,13 +140,55 @@ header .input{
 .commitsTimeline h3{
     text-align:center;
 }
-.commitsTimeline .year{
+.commitsTimeline .head{
     text-align:center;
     background-color:#789BFF;
     background-image: url("../images/head.png"), linear-gradient(#003B9E, #789BFF);
+    background-size: cover;
+    background-position: center center;
     color: #FFF;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
 }
-
+.commitsTimeline .row.noMargin{
+    margin-left:0px;
+    margin-right:0px;
+}
+.commitsTimeline .year{
+    margin-bottom: 25px;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    box-shadow: 3px 4px 5px;
+    padding-bottom: 20px;
+}
+.commitsTimeline .panel{
+    margin-left:10px;
+    margin-right:10px;
+    margin-bottom:10px;
+}
+.commitsTimeline .commitButton{
+    text-align:center;
+    padding-right: 10px;
+    padding-bottom:10px;
+    font-size:12px;
+    margin-bottom:-15px;
+}
+.commitsTimeline .displayAll{
+    font-size:12px;
+}
+.commitsTimeline .displayAll.fa{
+    font-size:18px;
+}
+.commitsTimeline .commitButton:hover{
+    background-image: linear-gradient(rgba(84, 127, 226, 0.14),white);
+    cursor:pointer;
+}
+.commitsTimeline .commitButton .fa{
+    font-size:18px;
+}
+.commitsTimeline .progress-bar-custom{
+    background-color: rgba(51, 122, 183, 0.44);
+}
 .error {
 	text-align:center;
 }
