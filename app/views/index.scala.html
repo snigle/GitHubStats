@@ -65,7 +65,7 @@
             <h1 class="col-sm-12">GitHub Stats</h1>
             <div class="col-sm-12">
                 <form class="input input-group" ng-submit="search()">
-                    <input class="form-control" ng-model="repos.searchText" ng-change="update()" name="search" list="reposList"
+                    <input class="form-control" ng-model="repos.searchText" ng-change="update()" name="repos" list="reposList"
                            aria-describedby="search-addon" placeholder="Choose a repository from GitHub"/>
                     <span ng-click="search()" class="input-group-addon" id="search-addon" >
                         <span class="glyphicon glyphicon-search" ng-if="!repos.loading"></span>

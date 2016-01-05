@@ -3,8 +3,9 @@
 # ~~~~
 
 # Home page
-GET     /                           controllers.Application.index
-GET     /repos/*name                controllers.Application.repo(name)
+GET     /                           controllers.Application.index(name : String = "Search Repository")
+GET     /repos/*name                controllers.Application.index(name)
+GET     /repo/*name                controllers.Application.repo(name)
 GET     /commits/*repo/:page        controllers.Application.commits(repo,page : Int)
 GET     /login/:code                controllers.Application.login(code : String)
 

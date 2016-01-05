@@ -1,12 +1,12 @@
 <div class="col-xs-12 col-sm-12 numberResults" ng-if="repos.data.total_count">{{repos.data.total_count}} results :</div>
-<div ng-repeat="repo in repos.data.items" class="col-xs-12 col-sm-12 results">
-<div class="col-xs-8 col-sm-10">
-<h3><a href="repos/{{repo.full_name}}">{{repo.full_name}}</a></h3>
-<div class="description" >{{repo.description}}</div>
-</div>
-<div class="col-xs-2 col-sm-1 counts"><i class="glyphicon glyphicon-star"></i><br />{{repo.stargazers_count}}</div>
-<div class="col-xs-2 col-sm-1 counts "><i class="glyphicon glyphicon-random"></i><br />{{repo.forks_count}}</div>
-<hr class="offset-xs-2 offset-sm-2 col-xs-10 col-sm-10"/> 
+<div ng-repeat="repo in repos.data.items" class="row results">
+    <div class="col-xs-12 col-sm-10">
+        <h3><a href="repos/{{repo.full_name}}">{{repo.full_name}}</a></h3>
+        <div class="description" >{{repo.description}}</div>
+    </div>
+    <div class="col-xs-6 col-sm-1 counts"><i class="glyphicon glyphicon-star"></i><br />{{repo.stargazers_count}}</div>
+    <div class="col-xs-6 col-sm-1 counts "><i class="glyphicon glyphicon-random"></i><br />{{repo.forks_count}}</div>
+    <hr class="col-xs-offset-1 col-sm-offset-1 col-xs-10 col-sm-10"/> 
 </div>
 
 <div class="col-xs-12 col-sm-12 loader" ng-if="repos.loading"><i class="fa fa-spinner fa-spin"></i></div>

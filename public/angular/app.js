@@ -4,7 +4,8 @@ var app = angular.module('GitHubStats',
 app.config([ '$routeProvider','$locationProvider', function($routeProvider,$locationProvider) {
 	$routeProvider.when('/', {
 		templateUrl : '/angular/views/repos.html',
-		controller : 'ReposController'
+		controller : 'ReposController',
+                reloadOnSearch: false
 	}).when('/repos/:org/:repo', {
 		templateUrl : '/angular/views/commits.html',
 		controller : 'CommitsController'
