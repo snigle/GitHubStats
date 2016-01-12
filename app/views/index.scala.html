@@ -1,4 +1,4 @@
-@(title: String)(implicit request : play.api.mvc.Request[AnyContent]) 
+@(title: String)(implicit request : play.api.mvc.Request[Unit]) 
 @import play.api.Play.current
 <!DOCTYPE html>
 <html lang="en" ng-app="GitHubStats" charset="utf-8" ng-controller="MainController">
@@ -22,7 +22,7 @@
         <script src="/angular/controllers/SearchController.js" type="text/javascript"></script>
         <script src="/angular/controllers/ReposController.js" type="text/javascript"></script>
         <script src="/angular/controllers/CommitsController.js" type="text/javascript"></script>
-        <script src="angular/controllers/QuotaController.js" type="text/javascript"></script>
+        <script src="/angular/controllers/QuotaController.js" type="text/javascript"></script>
 
         <!-- Stylesheets -->
         <link rel="stylesheet" media="screen" href="/stylesheets/main.css">

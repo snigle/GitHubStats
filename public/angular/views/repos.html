@@ -10,4 +10,4 @@
 </div>
 
 <div class="col-xs-12 col-sm-12 loader" ng-if="repos.loading"><i class="fa fa-spinner fa-spin"></i></div>
-<div class="col-xs-12 col-sm-12 more" ng-if="repos.data.total_count > repos.data.items.length" ng-hide="repos.page==1 && repos.loading"><button class="btn btn-default" ng-click="repos.nextPage()">Show More Results</button></div>
+<div class="col-xs-12 col-sm-12 more" ng-if="repos.data.total_count > repos.data.items.length" ng-hide="repos.page==1 && repos.loading"><button class="btn btn-default" ng-click="repos.update(repos.page+1)">Show More Results</button></div>
