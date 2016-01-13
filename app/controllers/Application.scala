@@ -95,24 +95,21 @@ class Application @Inject() (ws: WSClient) extends Controller {
       //Sort by year and by month and change the key by the month name
       val commitsByDate = Map(commitsByDate1.toSeq.sortBy(_._1).reverse: _*).mapValues(v => Map(v.toSeq.sortBy(_._1.get).reverse: _*))
         .mapValues(v => v.map(m => m match { case (key, value) => (key.getAsText(java.util.Locale.ENGLISH), value) }))
-      
-        
-        render {
-          case Accepts.Json() => Ok(Json.toJson(Map(
+
+      render {
+        case Accepts.Json() => Ok(Json.toJson(Map(
           "commits" -> Json.toJson(commitsByDate),
           "totalCommits" -> Json.toJson(commits.length),
           "authors" -> Json.toJson(authors)
-          )))
-        }
-      
+        )))
+      }
+
     });
   }
 
   //Ask access_token from gitHub and save it in cookie
   def login(code: String) = Action.async { implicit request =>
     {
-      println(ConfigFactory.load().getString("github.client_id"))
-      println(ConfigFactory.load().getString("github.client_secret"))
       ws.url("https://github.com/login/oauth/access_token").withHeaders("Accept" -> "application/json").post(
         Json.toJson(Map(
           "client_id" -> ConfigFactory.load().getString("github.client_id"), //"023b4b4bb7288038ddc4",
@@ -131,12 +128,12 @@ class Application @Inject() (ws: WSClient) extends Controller {
             case _ => Cookie("access_token", "", Some(0))
 
           }
-          
+
           render {
-          case Accepts.Json() => 
-                Ok(response.json).withCookies(
-                  cookie
-                )
+            case Accepts.Json() =>
+              Ok(response.json).withCookies(
+                cookie
+              )
           }
         })
 
