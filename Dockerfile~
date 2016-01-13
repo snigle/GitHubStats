@@ -19,10 +19,6 @@ RUN /bin/echo "192.168.254.10  proxy.cergy.eisti.fr" >> /etc/hosts \
     && unzip zengularity*.zip \
     && rm zengularity*.zip
 
-EXPOSE 80
-
-ENTRYPOINT cd GitHubStats-master/target/universal/zengularity*/ \
-          && ./bin/zengularity
-
-cmd ["-Dhttp.proxyHost","-Dhttp.proxyPort", "-Dhttp.port"]
+CMD cd GitHubStats-master/target/universal/zengularity*/
+    && ./bin/zengularity -Dhttp.proxyHost=192.168.254.10 -Dhttp.proxyPort=3128 -Dhttp.port=80 &
 
