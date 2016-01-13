@@ -20,8 +20,11 @@ import models._
 class Application @Inject() (ws: WSClient) extends Controller {
 
   //Index : load angularjs
-  def index(name: String = "") = Action(parse.empty) { request =>
-    Ok(views.html.index(name + " - GitHubStats")(request))
+  def index(name: String = "") = Action(parse.empty) { implicit request =>
+    render {
+      case Accepts.Html() => Ok(views.html.index(name + " - GitHubStats")(request))
+    }
+
   }
 
   def head(request: Request[Any]) = request.cookies.get("access_token") match {
@@ -46,14 +49,18 @@ class Application @Inject() (ws: WSClient) extends Controller {
   }
 
   //Get repository details
-  def repo(repo: String) = Action.async(parse.empty) { request =>
+  def repo(repo: String) = Action.async(parse.empty) { implicit request =>
     authenticatedRequest(request, "https://api.github.com/repos/" + repo, response => {
-      Ok(Json.toJson(response.json.validate[Repo].get))
+      render {
+        case Accepts.Json() => Ok(Json.toJson(response.json.validate[Repo].get))
+      }
+
     })
+
   }
 
   //Get list of commits and total by author
-  def commits(repo: String, page: Int) = Action.async(parse.empty) { request =>
+  def commits(repo: String, page: Int) = Action.async(parse.empty) { implicit request =>
 
     //Get all contributors for the first call
     val future_users = page match {
@@ -88,11 +95,16 @@ class Application @Inject() (ws: WSClient) extends Controller {
       //Sort by year and by month and change the key by the month name
       val commitsByDate = Map(commitsByDate1.toSeq.sortBy(_._1).reverse: _*).mapValues(v => Map(v.toSeq.sortBy(_._1.get).reverse: _*))
         .mapValues(v => v.map(m => m match { case (key, value) => (key.getAsText(java.util.Locale.ENGLISH), value) }))
-      Ok(Json.toJson(Map(
-        "commits" -> Json.toJson(commitsByDate),
-        "totalCommits" -> Json.toJson(commits.length),
-        "authors" -> Json.toJson(authors)
-      )))
+      
+        
+        render {
+          case Accepts.Json() => Ok(Json.toJson(Map(
+          "commits" -> Json.toJson(commitsByDate),
+          "totalCommits" -> Json.toJson(commits.length),
+          "authors" -> Json.toJson(authors)
+          )))
+        }
+      
     });
   }
 
@@ -109,19 +121,23 @@ class Application @Inject() (ws: WSClient) extends Controller {
         ))
       )
         .map(response => {
-            val cookie = (response.json \ "access_token") match {
-              case JsDefined(access_token) => Cookie(
-                  "access_token",
-                   access_token.toString,
-                  Some(60 * 60 * 24 * 7),
-                  httpOnly = true
+          val cookie = (response.json \ "access_token") match {
+            case JsDefined(access_token) => Cookie(
+              "access_token",
+              access_token.toString,
+              Some(60 * 60 * 24 * 7),
+              httpOnly = true
+            )
+            case _ => Cookie("access_token", "", Some(0))
+
+          }
+          
+          render {
+          case Accepts.Json() => 
+                Ok(response.json).withCookies(
+                  cookie
                 )
-              case _ => Cookie("access_token","",Some(0))
-              
-            }
-          Ok(response.json).withCookies(
-            cookie
-          )
+          }
         })
 
     }
